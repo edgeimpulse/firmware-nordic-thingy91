@@ -1,0 +1,49 @@
+#
+# Copyright (c) 2020 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+menu "MQTT Edge Impulse Demo"
+config MQTT_PUB_TOPIC_PREFIX
+	string "MQTT publish topic"
+	default "ei/demo"
+
+config MQTT_BROKER_HOSTNAME
+	string "MQTT broker hostname"
+	default "broker.hivemq.com"
+
+config MQTT_BROKER_PORT
+	int "MQTT broker port"
+	default 1883
+
+config MQTT_RECONNECT_DELAY_S
+	int "Seconds to delay before attempting to reconnect to the broker."
+	default 60
+
+config LTE_CONNECT_RETRY_DELAY_S
+	int "Seconds to delay before attempting to retry LTE connection."
+	default 120
+
+endmenu
+
+config EI_INFERENCE_THREAD_STACK
+	int "Inference thread stack size"
+	default 4096
+	help
+	  "Set the Edge Impulse inference thread stack size."
+
+config EI_INFERENCE_THREAD_PRIO
+	int "Inference thread priority"
+	default 5
+	help
+	  "Set the Edge Impulse inference thread priority. The lower number, the higher prority."
+
+
+menu "Zephyr Kernel"
+source "Kconfig.zephyr"
+endmenu
+
+module = MQTT_EI_DEMO
+module-str = MQTT Edge Impulse Demo
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
