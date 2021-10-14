@@ -1,6 +1,8 @@
-# firmware-nordic-thingy91
+# Edge Impulse firmware for Nordic Semi Thingy:91
 
-This is a preview release of the Edge Impulse firmware for the Nordic Semi Thingy91.
+[Edge Impulse](https://www.edgeimpulse.com) enables developers to create the next generation of intelligent device solutions with embedded Machine Learning. This repository contains the Edge Impulse firmware for the Nordic Semiconductor Thingy91 development board. This combination supports all Edge Impulse device features, including ingestion, remote management and inferencing.
+
+> **Note:** Do you just want to use this development board with Edge Impulse? No need to build this firmware. See the instructions for the [Thingy91](https://docs.edgeimpulse.com/docs/nordic-semi-thingy91) for a prebuilt image and instructions, or use the [data forwarder](https://docs.edgeimpulse.com/docs/cli-data-forwarder) to capture data from any sensor.
 
 ## How to build
 
