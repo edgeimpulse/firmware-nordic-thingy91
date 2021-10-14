@@ -22,7 +22,7 @@
 
 **2. Building and flashing the `connectivity bridge`**
 
-If you Thingy91 is not registering two serial ports after connecting to PC through Micro USB cable, then you have to flash the `connectivty bridge` firmware. Otherwise, go to the next step.
+If your Thingy91 is not registering two serial ports after connecting to PC through Micro USB cable, then you have to flash the `connectivty bridge` firmware. Otherwise, go to the next step.
 
 1. Building the `connectivity bridge`:
 
@@ -36,7 +36,7 @@ If you Thingy91 is not registering two serial ports after connecting to PC throu
 
         ![Thingy91 SWD SELECT switch location](./doc/thingy91-swd-select.png)
 
-    1. Connect you Thingy91 to JLink (eg. another Nordic's DK) as show [here](https://infocenter.nordicsemi.com/topic/ug_thingy91_gsg/UG/thingy91_gsg/updating_fw_ext_probe.html?cp=14_0_3_1)
+    1. Connect your Thingy91 to JLink (eg. another Nordic's DK) as shown [here](https://infocenter.nordicsemi.com/topic/ug_thingy91_gsg/UG/thingy91_gsg/updating_fw_ext_probe.html?cp=14_0_3_1)
     1. Flash:
 
         ```
@@ -59,8 +59,8 @@ If you Thingy91 is not registering two serial ports after connecting to PC throu
     ```
 
 1. To flash the application using JLink, do as follows:
-    1. Switch the `SWD SELECT` switch back to the `nRF91` position.
-    1. Connect you Thingy91 to JLink (eg. another Nordic's DK) as show [here](https://infocenter.nordicsemi.com/topic/ug_thingy91_gsg/UG/thingy91_gsg/updating_fw_ext_probe.html?cp=14_0_3_1)
+    1. Switch the `SWD SELECT` back to the `nRF91` position.
+    1. Connect your Thingy91 to JLink (eg. another Nordic's DK like `nRF9160DK` or `nrf5340DK`) as shown [here](https://infocenter.nordicsemi.com/topic/ug_thingy91_gsg/UG/thingy91_gsg/updating_fw_ext_probe.html?cp=14_0_3_1)
     1. Flash:
 
         ```
