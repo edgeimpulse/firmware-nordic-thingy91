@@ -50,7 +50,7 @@ static const ei_device_fusion_sensor_t environment_sensor = {
     // number of sensor module axis
     ENVIRONMENT_VALUES_IN_SAMPLE,
     // sampling frequencies
-    { 1.0f, 12.5f },
+    { 0.25f },
     // axis name and units payload (must be same order as read in)
     { {"temperature", "degC"}, {"pressure", "kPa"}, {"humidity", "%"}, {"gas res", "MOhm"}, },
     // reference to read data function

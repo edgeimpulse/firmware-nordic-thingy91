@@ -72,6 +72,21 @@ static char fusion_buffer[NUM_MAX_FUSIONS * SIZEOF_SENSOR_NAME];
 static int num_fusions, num_fusion_axis;
 
 /**
+ * @brief      Feturn maximum frequency for given sensor fusion
+ *
+ * @retval  maximum fusion frequency as float value
+ */
+static float fusion_frequency_max()
+{
+    if (strstr(fusion_buffer, environment_sensor.name) != NULL) {
+        return FUSION_FREQUENCY_ENV;
+    }
+    else {
+        return FUSION_FREQUENCY;
+    }
+}
+
+/**
  * @brief   Gets list of possible sensor combinations from fusable_sensor_list
  */
 void ei_get_sensor_fusion_list(void)
@@ -266,7 +281,7 @@ bool ei_fusion_setup_data_sampling(void)
 void create_fusion_list(int min_length, int i, int curr_length, bool check[], int max_length)
 {
     uint32_t available_bytes;
-
+    float fusion_freq = 0.0f;
     int curr_pos = 0;
 
     if(curr_length > min_length) {
@@ -298,8 +313,9 @@ void create_fusion_list(int min_length, int i, int curr_length, bool check[], in
                         }
                     } 
                     else { // fusion, use set freq
-                        ei_printf("Name: %s, Max sample length: %hus, Frequencies: [", fusion_buffer, (int)(available_bytes / (FUSION_FREQUENCY * (sizeof(sample_format_t) * num_fusion_axis) * 2)));
-                        ei_printf_float(FUSION_FREQUENCY);
+                        fusion_freq = fusion_frequency_max();
+                        ei_printf("Name: %s, Max sample length: %hus, Frequencies: [", fusion_buffer, (int)(available_bytes / (fusion_freq * (sizeof(sample_format_t) * num_fusion_axis) * 2)));
+                        ei_printf_float(fusion_freq);
                         ei_printf("Hz");
                     }
                     ei_printf("]\n");

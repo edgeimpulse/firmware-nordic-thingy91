@@ -34,6 +34,9 @@
 #include "ei_classifier_porting.h"
 
 #include <logging/log.h>
+#include "bme68x/bme68x.h"
+#include "bme68x/bme68x_port.h"
+
 #define LOG_MODULE_NAME ei_environment
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
@@ -45,12 +48,9 @@ extern EI_CONFIG_ERROR ei_config_set_sample_interval(float interval);
 static sampler_callback  cb_sampler;
 static const struct device *sensor_dev;
 static float sample[ENVIRONMENT_VALUES_IN_SAMPLE];
-
-static void env_timer_handler(struct k_timer *dummy);
-static void env_work_handler(struct k_work *work);
-
-K_TIMER_DEFINE(env_timer, env_timer_handler, NULL);
-K_WORK_DEFINE(env_work, env_work_handler);
+static struct bme68x_dev bme;
+static struct bme68x_conf conf;
+static struct bme68x_heatr_conf heatr_conf;
 
 /* private functions */
 bool ei_environment_fetch_sample(void);
@@ -62,14 +62,42 @@ bool ei_environment_fetch_sample(void);
  */
 bool ei_environment_init(void)
 {
-	sensor_dev = device_get_binding("BME680");
-	if (!sensor_dev) {
-		LOG_ERR("Devicetree has no BME680 node");
-		return false;
-	}
+    int8_t rslt;
 
-    k_timer_start(&env_timer, K_MSEC(80), K_MSEC(80));
+    rslt = bme68x_interface_init(&bme, BME68X_I2C_INTF);
+    if(rslt != BME68X_OK) {
+        bme68x_check_rslt("bme68x_interface_init", rslt);
+        return false;
+    }
 
+    rslt = bme68x_init(&bme);
+    if(rslt != BME68X_OK) {
+        bme68x_check_rslt("bme68x_init", rslt);
+        return false;
+    }
+
+    /* Check if rslt == BME68X_OK, report or handle if otherwise */
+    conf.filter = BME68X_FILTER_OFF;
+    conf.odr = BME68X_ODR_NONE;
+    conf.os_hum = BME68X_OS_1X;
+    conf.os_pres = BME68X_OS_16X;
+    conf.os_temp = BME68X_OS_2X;
+    rslt = bme68x_set_conf(&conf, &bme);
+    if(rslt != BME68X_OK) {
+        bme68x_check_rslt("bme68x_set_conf", rslt);
+        return false;
+    }
+
+    /* Check if rslt == BME68X_OK, report or handle if otherwise */
+    heatr_conf.enable = BME68X_ENABLE;
+    heatr_conf.heatr_temp = 320;
+    heatr_conf.heatr_dur = 197;
+    rslt = bme68x_set_heatr_conf(BME68X_FORCED_MODE, &heatr_conf, &bme);
+    if(rslt != BME68X_OK) {
+        bme68x_check_rslt("bme68x_set_heatr_conf", rslt);
+        return false;
+    }
+    
     return true;
 }
 
@@ -96,40 +124,35 @@ bool ei_environment_sample_start(sampler_callback callsampler, float sample_inte
 
 bool ei_environment_fetch_sample(void)
 {
-    struct sensor_value raw_sample[ENVIRONMENT_VALUES_IN_SAMPLE];
+    int8_t rslt;
+    struct bme68x_data data;
+    uint32_t del_period;
+    uint8_t n_fields;
 
-    /* 
-     * Sample fetching is done by env_timer in the background to provide
-     * stable readings. It is required due to heating element in the gas sensor that
-     * has direct impact on temp and hum readings.
-     */
-
-    //TODO: add channel IDs and coefficients to some array and do readings in a loop
-    if (sensor_channel_get(sensor_dev, SENSOR_CHAN_AMBIENT_TEMP, &raw_sample[0])) {
-        LOG_ERR("sensor_channel_get failed on SENSOR_CHAN_AMBIENT_TEMP");
+    rslt = bme68x_set_op_mode(BME68X_FORCED_MODE, &bme);
+    if(rslt != BME68X_OK) {
+        bme68x_check_rslt("bme68x_set_op_mode", rslt);
         return false;
     }
 
-    if (sensor_channel_get(sensor_dev, SENSOR_CHAN_PRESS, &raw_sample[1])) {
-        LOG_ERR("sensor_channel_get failed on SENSOR_CHAN_PRESS");
+    /* Calculate delay period in microseconds */
+    del_period = bme68x_get_meas_dur(BME68X_FORCED_MODE, &conf, &bme) + (heatr_conf.heatr_dur * 1000);
+    bme.delay_us(del_period, bme.intf_ptr);
+
+    /* Check if rslt == BME68X_OK, report or handle if otherwise */
+    rslt = bme68x_get_data(BME68X_FORCED_MODE, &data, &n_fields, &bme);
+    if(n_fields == 0) {
+        bme68x_check_rslt("bme68x_get_data", rslt);
         return false;
     }
 
-    if (sensor_channel_get(sensor_dev, SENSOR_CHAN_HUMIDITY, &raw_sample[2])) {
-        LOG_ERR("sensor_channel_get failed on SENSOR_CHAN_HUMIDITY");
-        return false;
-    }
+    sample[0] = data.temperature;
+    /* converet Pa to kPa */
+    sample[1] = data.pressure / 1000.0f;
+    sample[2] = data.humidity;
+    /* converet Ohm to MOhm */
+    sample[3] = data.gas_resistance / 1000000.0f;
 
-    if (sensor_channel_get(sensor_dev, SENSOR_CHAN_GAS_RES, &raw_sample[3])) {
-        LOG_ERR("sensor_channel_get failed on SENSOR_CHAN_GAS_RES");
-        return false;
-    }
-
-    for(int i=0; i<ENVIRONMENT_VALUES_IN_SAMPLE; i++) {
-        sample[i] = (float)sensor_value_to_double(&raw_sample[i]);
-    }
-    // sample 3 is SENSOR_CHAN_GAS_RES and we have to convert it to Mohm
-    sample[3] = sample[3] / 100000.0f;
 
     return true;
 }
@@ -155,22 +178,12 @@ void ei_environment_read_data(void)
 
 float *ei_fusion_environment_read_data(void)
 {
-    ei_environment_fetch_sample();
+    if(ei_environment_fetch_sample() == false) {
+        sample[0] = 0.0f;
+        sample[1] = 0.0f;
+        sample[2] = 0.0f;
+        sample[3] = 0.0f;
+    }
 
     return sample;
-}
-
-static void env_timer_handler(struct k_timer *dummy)
-{
-    /* fetching sample can't be done on interrupt level
-     * so we have to submit work to thread level worker
-     */
-    k_work_submit(&env_work);
-}
-
-static void env_work_handler(struct k_work *work)
-{
-    if (sensor_sample_fetch(sensor_dev) < 0) {
-        LOG_ERR("Sample fetch error");
-    }
 }

@@ -78,7 +78,9 @@ void ei_inference_thread(void* param1, void* param2, void* param3)
     const uint32_t delay = 5000;
 // #elif defined(EI_CLASSIFIER_SENSOR) && EI_CLASSIFIER_SENSOR == EI_CLASSIFIER_SENSOR_LIGHT
     // const uint32_t delay = 2000;
-#endif
+#else
+#error "EI_CLASSIFIER_SENSOR not configured, cannot configure `inference_thread`"
+#endif  // EI_CLASSIFIER_SENSOR
 
     LOG_INF("Sample length: %f ms", sample_length);
     LOG_INF("Delay time: %d ms", delay);
@@ -109,7 +111,9 @@ void ei_inference_thread(void* param1, void* param2, void* param3)
         ei_environment_sample_start(&samples_callback, EI_CLASSIFIER_INTERVAL_MS);
 // #elif defined(EI_CLASSIFIER_SENSOR) && EI_CLASSIFIER_SENSOR == EI_CLASSIFIER_SENSOR_LIGHT
 //         ei_lightsensor_sample_start(&samples_callback, EI_CLASSIFIER_INTERVAL_MS);
-#endif
+#else
+#error "EI_CLASSIFIER_SENSOR not configured, cannot configure `inference_thread`"
+#endif  // EI_CLASSIFIER_SENSOR
 
         /* Fill samples buffer */
         ei_printf("Starting inferencing in %d seconds...\n", (EI_CLASSIFIER_RAW_SAMPLE_COUNT * EI_CLASSIFIER_INTERVAL_MS / 1000));
@@ -120,7 +124,10 @@ void ei_inference_thread(void* param1, void* param2, void* param3)
             ei_environment_read_data();
 // #elif defined(EI_CLASSIFIER_SENSOR) && EI_CLASSIFIER_SENSOR == EI_CLASSIFIER_SENSOR_LIGHT
 //                 ei_lightsensor_read_data();
-#endif
+#else
+#error "EI_CLASSIFIER_SENSOR not configured, cannot configure `inference_thread`"
+#endif  // EI_CLASSIFIER_SENSOR
+
             // check just to be sure nobody stopped us during samples collecting
             if(!inference_active) {
                 break;
@@ -164,7 +171,10 @@ void ei_inference_thread(void* param1, void* param2, void* param3)
                 ei_environment_read_data();
 // #elif defined(EI_CLASSIFIER_SENSOR) && EI_CLASSIFIER_SENSOR == EI_CLASSIFIER_SENSOR_LIGHT
                 // ei_lightsensor_read_data();
-#endif
+#else
+#error "EI_CLASSIFIER_SENSOR not configured, cannot configure `inference_thread`"
+#endif  // EI_CLASSIFIER_SENSOR
+
                 // check just to be sure nobody stopped us during samples collecting
                 if(!inference_active) {
                     break;

@@ -5,7 +5,7 @@
 #include "ei_zephyr_flash_commands.h"
 #include "ei_device_nordic_nrf91.h"
 
-#define RAM_SAMPLE_BLOK         9
+#define RAM_SAMPLE_BLOK         21
 #define RAM_SAMPLE_BLOK_SIZE    4096
 
 #define SIZE_RAM_BUFFER         (RAM_SAMPLE_BLOK_SIZE * RAM_SAMPLE_BLOK)
