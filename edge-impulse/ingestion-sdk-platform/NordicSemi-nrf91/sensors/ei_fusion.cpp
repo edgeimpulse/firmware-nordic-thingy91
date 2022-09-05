@@ -32,7 +32,7 @@
 #include "ei_config_types.h"
 #include "ei_device_nordic_nrf91.h"
 #include "ei_zephyr_flash_commands.h"
-#include "ei_classifier_porting.h"
+#include "edge-impulse-sdk/porting/ei_classifier_porting.h"
 
 #include <cmath>
 #include <stdio.h>
@@ -55,7 +55,7 @@ bool ei_fusion_sample_start(sampler_callback callsampler, float sample_interval_
 ** @brief fixes CBOR header padding issue
 */
 #define CBOR_HEADER_OFFSET      0x02 // offset for unknown header size (can be 0-3)
-#define SENSORS_BYTE_OFFSET     14 // number of CBOR bytes for sensor (ie {"name": "...", "units": "..."}) 
+#define SENSORS_BYTE_OFFSET     14 // number of CBOR bytes for sensor (ie {"name": "...", "units": "..."})
 
 sampler_callback  fusion_cb_sampler;
 
@@ -93,7 +93,7 @@ void ei_get_sensor_fusion_list(void)
 {
     num_fusion_axis = 0;
     fusion_buffer[0] = '\0';
-    bool check[NUM_FUSION_SENSORS];  
+    bool check[NUM_FUSION_SENSORS];
 
     for(int i = 0; i < NUM_FUSION_SENSORS; i++) {
         check[i] = false;
@@ -108,14 +108,14 @@ void ei_get_sensor_fusion_list(void)
  * @brief      Check if requested sensor list is valid sensor fusion, create sensor buffer
  *
  * @param[in]  sensor_list      Sensor list to sample (ie. "Inertial + Environmental")
- * 
+ *
  * @retval  false if invalid sensor_list
  */
-bool ei_is_fusion(char *sensor_list) 
+bool ei_is_fusion(char *sensor_list)
 {
     char *buff;
     bool is_fusion, added_loc;
-    
+
     num_fusions = 0;
     num_fusion_axis = 0;
 
@@ -123,7 +123,7 @@ bool ei_is_fusion(char *sensor_list)
     for (int i = 0; i < NUM_FUSION_SENSORS; i++) {
         fusion_sensors[i] = NULL;
     }
-    
+
     // copy sensor_list to buffer to keep for error msgs
     strcpy(fusion_buffer, sensor_list);
     buff = strtok(fusion_buffer, " +");
@@ -135,7 +135,7 @@ bool ei_is_fusion(char *sensor_list)
             // is a matching sensor
             if (strstr(buff, fusable_sensor_list[i].name)) {
                 added_loc = false;
-                for (int j = 0; j < num_fusions; j++) { 
+                for (int j = 0; j < num_fusions; j++) {
                     // has already been added to sampling list
                     if (strstr(buff, fusion_sensors[j]->name)) {
                         added_loc = true;
@@ -146,7 +146,7 @@ bool ei_is_fusion(char *sensor_list)
                     fusion_sensors[num_fusions++] = (ei_device_fusion_sensor_t *)&fusable_sensor_list[i];
                     num_fusion_axis += fusable_sensor_list[i].num_axis;
                 }
-                is_fusion = true; 
+                is_fusion = true;
             }
         }
         // no matching sensors in sensor_list
@@ -160,7 +160,7 @@ bool ei_is_fusion(char *sensor_list)
 
 /**
  * @brief   Read from selected sensors, combine and send to callback sampler
- * 
+ *
  * @todo    Allow sampling at multiple frequencies
  */
 void ei_fusion_read_data(void)
@@ -181,7 +181,7 @@ void ei_fusion_read_data(void)
 
         loc += fusion_sensors[i]->num_axis;
     }
-    
+
     // send fusion data to sampler
     fusion_cb_sampler((const void *)&data[0], sizeof(sample_format_t) * num_fusion_axis);
 
@@ -196,7 +196,7 @@ void ei_fusion_read_data(void)
  *
  * @param[in]  callsampler          callback function from ei_sampler
  * @param[in]  sample_interval_ms   sample interval from ei_sampler
- * 
+ *
  * @retval  false if initialisation failed
  */
 bool ei_fusion_sample_start(sampler_callback callsampler, float sample_interval_ms)
@@ -211,7 +211,7 @@ bool ei_fusion_sample_start(sampler_callback callsampler, float sample_interval_
         }
         else {
             EiDevice.set_state(eiStateIdle);
-            //Delay due to afect of LEDs to the light sensor 
+            //Delay due to afect of LEDs to the light sensor
             k_sleep(K_MSEC(500));
         }
     }
@@ -221,7 +221,7 @@ bool ei_fusion_sample_start(sampler_callback callsampler, float sample_interval_
 /**
  * @brief      Create payload for sampling list, pad, start sampling
  */
-bool ei_fusion_setup_data_sampling(void) 
+bool ei_fusion_setup_data_sampling(void)
 {
     uint32_t available_bytes;
     uint32_t requested_bytes;
@@ -235,12 +235,12 @@ bool ei_fusion_setup_data_sampling(void)
     // Check available sample size before sampling for the selected frequency
     requested_bytes = ceil((ei_config_get_config()->sample_length_ms / ei_config_get_config()->sample_interval_ms) * (sizeof(sample_format_t) * num_fusion_axis) * 2);
     if(requested_bytes > available_bytes) {
-        ei_printf("ERR: Sample length is too long. Maximum allowed is %ims at %.1fHz.\r\n", 
+        ei_printf("ERR: Sample length is too long. Maximum allowed is %ims at %.1fHz.\r\n",
             (int)floor(available_bytes / (((sizeof(sample_format_t) * num_fusion_axis) * 2) / ei_config_get_config()->sample_interval_ms)),
             (1000 / ei_config_get_config()->sample_interval_ms));
         return false;
     }
-    
+
     // create header payload from individual sensors
     sensor_aq_payload_info payload = { EiDevice.get_id_pointer(), EiDevice.get_type_pointer(), ei_config_get_config()->sample_interval_ms, NULL };
     for (int i = 0; i < num_fusions; i++) {
@@ -311,7 +311,7 @@ void create_fusion_list(int min_length, int i, int curr_length, bool check[], in
                                 ei_printf("Hz");
                             }
                         }
-                    } 
+                    }
                     else { // fusion, use set freq
                         fusion_freq = fusion_frequency_max();
                         ei_printf("Name: %s, Max sample length: %hus, Frequencies: [", fusion_buffer, (int)(available_bytes / (fusion_freq * (sizeof(sample_format_t) * num_fusion_axis) * 2)));

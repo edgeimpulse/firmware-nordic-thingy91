@@ -33,6 +33,8 @@
 #include <drivers/uart.h>
 #include <modem/modem_info.h>
 #include "ei_run_impulse_thread.h"
+#include <logging/log.h>
+LOG_MODULE_REGISTER(device);
 
 extern "C" {
     #include "connectivity.h"
@@ -681,8 +683,9 @@ int uart_init(void)
 {
 	int err = 0;
 
-	uart = device_get_binding(DT_LABEL(DT_NODELABEL(uart0)));
+	uart = device_get_binding("UART_0");
 	if (!uart) {
+        LOG_ERR("Failed to init UART_0");
 		return -ENXIO;
 	}
     

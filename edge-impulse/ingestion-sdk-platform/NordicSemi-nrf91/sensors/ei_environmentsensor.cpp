@@ -31,7 +31,7 @@
 #include "ei_config_types.h"
 #include "ei_device_nordic_nrf91.h"
 #include "sensor_aq.h"
-#include "ei_classifier_porting.h"
+#include "edge-impulse-sdk/porting/ei_classifier_porting.h"
 
 #include <logging/log.h>
 #include "bme68x/bme68x.h"
@@ -97,7 +97,7 @@ bool ei_environment_init(void)
         bme68x_check_rslt("bme68x_set_heatr_conf", rslt);
         return false;
     }
-    
+
     return true;
 }
 

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include "ei_classifier_porting.h"
+#include "edge-impulse-sdk/porting/ei_classifier_porting.h"
 #include <sys/printk.h>
 #include "ei_device_nordic_nrf91.h"
 
@@ -189,14 +189,14 @@ void rx_callback(char c) {
             break;
         case 0x1b: /* control character */
             // wait until next a-zA-Z
-            inControlChar = true;                
+            inControlChar = true;
             ei_printf("\033[s"); // save current position
 
 
             break; /* break out of the callback (ignore all other characters) */
-        default:        	
+        default:
             size_t curr_pos = buffer.getPosition();
-            size_t buffer_size = buffer.size();            
+            size_t buffer_size = buffer.size();
             if (curr_pos == buffer_size) {
                 buffer.add(c);
                 ei_putc(c);
@@ -261,7 +261,7 @@ static void runBuffer(void)
     bool printNewState = true;
     // if (commandCallback) {
     //     printNewState = commandCallback(rawCode.c_str());
-    // }  
+    // }
     printNewState = ei_at_cmd_handle(rawCode.c_str());
 
     buffer.clear();

@@ -6,8 +6,11 @@
 #include <random/rand32.h>
 #include <net/mqtt.h>
 #include <net/socket.h>
-#include <modem/at_cmd.h>
+#include <nrf_modem_at.h>
 #include <modem/lte_lc.h>
+#include <logging/log.h>
+
+LOG_MODULE_REGISTER(connectivity, LOG_LEVEL_INF);
 
 #define MQTT_MESSAGE_BUFFER_SIZE    128
 #define MQTT_PAYLOAD_BUFFER_SIZE    128
@@ -26,7 +29,7 @@ static struct pollfd fds;
 K_THREAD_STACK_DEFINE(mqtt_handler_stack, STACKSIZE);
 // struct k_thread mqtt_handler_data;
 // k_tid_t mqtt_handler_id;
-void mqtt_handler(void *p1, void *p2, void *p3);
+void mqtt_thread(void *p1, void *p2, void *p3);
 static bool mqtt_active = false;
 static bool mqtt_connected = false;
 
@@ -313,9 +316,18 @@ int ei_mqtt_connect(const char* client_id)
     return 0;
 }
 
-void mqtt_handler(void * p1, void * p2, void * p3)
+void mqtt_thread(void * p1, void * p2, void * p3)
 {
     int err;
+
+	/* Turn off LTE power saving features for a more responsive demo. Also,
+	 * request power saving features before network registration. Some
+	 * networks rejects timer updates after the device has registered to the
+	 * LTE network.
+	 */
+	LOG_INF("Disabling PSM and eDRX");
+	lte_lc_psm_req(false);
+	lte_lc_edrx_req(false);
 
     while(1) {
         if(!mqtt_active) {
@@ -405,9 +417,9 @@ void ei_mqtt_publish(const char *value)
                        MQTT_QOS_1_AT_LEAST_ONCE,
                        (uint8_t*) value,
                        strlen(value));
-    if (err) {
-        printk("ERR: Publish failed: %d\n", err);
-    }
+    // if (err) {
+    //     printk("ERR: Publish failed: %d\n", err);
+    // }
 }
 
 bool ei_get_mqtt_connected(void)
@@ -415,5 +427,5 @@ bool ei_get_mqtt_connected(void)
     return mqtt_connected;
 }
 
-K_THREAD_DEFINE(mqtt_handler_id, STACKSIZE, mqtt_handler, NULL, NULL, NULL,
+K_THREAD_DEFINE(mqtt_thread_id, STACKSIZE, mqtt_thread, NULL, NULL, NULL,
                 PRIORITY, 0, 0);

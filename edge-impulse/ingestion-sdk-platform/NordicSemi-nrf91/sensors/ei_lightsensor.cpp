@@ -31,7 +31,7 @@
 #include "ei_lightsensor.h"
 #include "ei_device_nordic_nrf91.h"
 #include "sensor_aq.h"
-#include "ei_classifier_porting.h"
+#include "edge-impulse-sdk/porting/ei_classifier_porting.h"
 
 #include <logging/log.h>
 #define LOG_MODULE_NAME ei_light
@@ -84,9 +84,9 @@ bool ei_lightsensor_sample_start(sampler_callback callsampler, float sample_inte
     //Disabled because LEDs are interfering with raw_sample sensor
     EiDevice.set_state(eiStateIdle);//eiStateSampling);
 
-    //Delay due to afect of LEDs to the raw_sample sensor 
+    //Delay due to afect of LEDs to the raw_sample sensor
     k_sleep(K_MSEC(500));
-    
+
     return true;
 }
 

@@ -31,7 +31,7 @@
 #include "ei_config_types.h"
 #include "ei_device_nordic_nrf91.h"
 #include "sensor_aq.h"
-#include "ei_classifier_porting.h"
+#include "edge-impulse-sdk/porting/ei_classifier_porting.h"
 
 #include <logging/log.h>
 #define LOG_MODULE_NAME ei_accel

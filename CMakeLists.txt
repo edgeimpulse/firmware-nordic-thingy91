@@ -21,25 +21,15 @@ add_definitions(-DEIDSP_USE_CMSIS_DSP=1
                 -DEI_SENSOR_AQ_STREAM=FILE
                 )
 
-# Edge impulse SDK include directories
+# Add the Edge Impulse SDK
+add_subdirectory(edge-impulse-sdk/cmake/zephyr)
+
+# Include directories (everything in the SDK is already included here)
 set(INCLUDES
     .
     src
     tflite-model
     model-parameters
-    edge-impulse-sdk
-    edge-impulse-sdk/third_party/ruy
-    edge-impulse-sdk/third_party/gemmlowp
-    edge-impulse-sdk/third_party/flatbuffers/include
-    edge-impulse-sdk/third_party
-    edge-impulse-sdk/tensorflow
-    edge-impulse-sdk/dsp
-    edge-impulse-sdk/classifier
-    edge-impulse-sdk/anomaly
-    edge-impulse-sdk/CMSIS/NN/Include
-    edge-impulse-sdk/CMSIS/DSP/PrivateInclude
-    edge-impulse-sdk/CMSIS/DSP/Include
-    edge-impulse-sdk/CMSIS/Core/Include
     edge-impulse/ingestion-sdk-c
     edge-impulse/ingestion-sdk-platform/NordicSemi-nrf91
     edge-impulse/ingestion-sdk-platform/NordicSemi-nrf91/sensors
@@ -47,22 +37,10 @@ set(INCLUDES
     edge-impulse/QCBOR/inc
     edge-impulse/QCBOR/src
     edge-impulse/repl
-    edge-impulse-sdk/porting
     )
 include_directories(${INCLUDES})
 
-#file(GLOB PLATFORM "${CMAKE_CURRENT_LIST_DIR}/ingestion-sdk-platform/eta-compute/*.cpp")
-#file(GLOB REPL "${CMAKE_CURRENT_LIST_DIR}/repl/*.cpp")
-#file(GLOB INGESTION "${CMAKE_CURRENT_LIST_DIR}/ingestion-sdk-c/*.cpp")
-#file(GLOB QCBOR "${CMAKE_CURRENT_LIST_DIR}/QCBOR/src/*.c")
-#file(GLOB MBEDTLS "${CMAKE_CURRENT_LIST_DIR}/mbedtls_hmac_sha256_sw/mbedtls/src/*.c")
-#file(GLOB EIPORT "${CMAKE_CURRENT_LIST_DIR}/edge-impulse-sdk/porting/YOURTARGET/*.cpp")
-
-RECURSIVE_FIND_FILE(SOURCE_FILES "edge-impulse-sdk" "*.cpp")
 RECURSIVE_FIND_FILE(MODEL_FILES "tflite-model" "*.cpp")
-RECURSIVE_FIND_FILE(CC_FILES "edge-impulse-sdk" "*.cc")
-RECURSIVE_FIND_FILE(S_FILES "edge-impulse-sdk" "*.s")
-RECURSIVE_FIND_FILE(C_FILES "edge-impulse-sdk" "*.c")
 
 RECURSIVE_FIND_FILE(PLATFORM_FILES "edge-impulse/ingestion-sdk-platform/NordicSemi-nrf91" "*.cpp")
 RECURSIVE_FIND_FILE(PLATFORM_C_FILES "edge-impulse/ingestion-sdk-platform/NordicSemi-nrf91" "*.c")
@@ -70,8 +48,6 @@ RECURSIVE_FIND_FILE(REPL_FILES "edge-impulse/repl" "*.cpp")
 RECURSIVE_FIND_FILE(INGESTION_FILES "edge-impulse/ingestion-sdk-c/" "*.cpp")
 RECURSIVE_FIND_FILE(QCBOR_FILES "edge-impulse/QCBOR/src" "*.c")
 RECURSIVE_FIND_FILE(MBEDTLS_FILES "edge-impulse/mbedtls_hmac_sha256_sw/mbedtls/src" "*.c")
-RECURSIVE_FIND_FILE(PORTING_FILES "edge-impulse-sdk/porting/zephyr" "*.cpp")
-
 
 list(APPEND SOURCE_FILES ${S_FILES})
 list(APPEND SOURCE_FILES ${C_FILES})

@@ -9,11 +9,11 @@
 **1. Setting up NCS**
 
 1. Install the [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/gs_installing.html) in a *separate* folder from this repository (e.g. `~/repos/ncs`).
-1. Check out NCS version 1.7.0:
+1. Check out NCS version 1.9.1:
 
     ```
     $ cd ~/repos/ncs/nrf
-    $ git checkout v1.7.0
+    $ git checkout v1.9.1
     $ cd ..
     $ west update
     ```
@@ -75,6 +75,32 @@ If your Thingy91 is not registering two serial ports after connecting to PC thro
 
 That's it. You can now connect to the device through the Edge Impulse CLI or through WebUSB, as described [here](https://docs.edgeimpulse.com/docs/nordic-semi-nrf5340-dk#4-setting-keys).
 
+## Building the device firmware (Docker)
+
+1. Clone this repository:
+
+    ```
+    $ git clone https://github.com/edgeimpulse/firmware-nordic-thingy91
+    ```
+
+1. Build the Docker container:
+
+    ```
+    $ docker build -t edge-impulse-nordic-thingy91 .
+    ```
+
+1. Build the `connectivity_bridge`:
+
+    ```
+    $ docker run --rm -v $PWD:/app -w /app/connectivity_bridge edge-impulse-nordic-thingy91 west build -b thingy91_nrf52840
+    ```
+
+1. Build the application:
+
+    ```
+    $ docker run --rm -v $PWD:/app edge-impulse-nordic-thingy91 west build -b thingy91_nrf9160_ns
+    ```
+
 ## Running your ML model
 
 To update your ML model:
@@ -126,7 +152,3 @@ To see the output of inference process, make to following steps after deploying 
 
     ![MQTT Client topic subscription](./doc/online-mqtt-client-messages.png)
 
-
-## Dependencies
-* NCS version: **1.7.0**
-* default **Thingy91** (any revision)
