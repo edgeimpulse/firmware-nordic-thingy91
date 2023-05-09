@@ -26,14 +26,7 @@
 /* Include ----------------------------------------------------------------- */
 #include "ei_sampler.h"
 #include "sensor_aq.h"
-
-#define NUM_FUSION_SENSORS       3  // number of fusable sensor modules
-#define NUM_MIN_FUSIONS          1  // min number of sensor module combinations
-#define NUM_MAX_FUSIONS          3  // max number of sensor module combinations
-#define FUSION_FREQUENCY         10.0f // sampling frequency for fusion samples
-#define FUSION_FREQUENCY_ENV     0.25f //sampling frequency for fusion samples which include environment sensor
-#define NUM_MAX_FUSION_AXIS      20 // max number of axis to sample
-#define SIZEOF_SENSOR_NAME       20 // char alloc for sensor module name
+#include "ei_fusion_sensors_config.h"
 
 #define EI_MAX_FREQUENCIES  5
 /**
