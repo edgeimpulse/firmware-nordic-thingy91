@@ -9,16 +9,16 @@
 
 #include "ble_data_event.h"
 
-static int log_ble_data_event(const struct event_header *eh, char *buf,
-				  size_t buf_len)
+static void log_ble_data_event(const struct app_event_header *aeh)
 {
-	const struct ble_data_event *event = cast_ble_data_event(eh);
+	const struct ble_data_event *event = cast_ble_data_event(aeh);
 
-	EVENT_MANAGER_LOG(eh, "buf:%p len:%d", event->buf, event->len);
-	return 0;
+	APP_EVENT_MANAGER_LOG(aeh, "buf:%p len:%d", event->buf, event->len);
 }
 
-EVENT_TYPE_DEFINE(ble_data_event,
-		  IS_ENABLED(CONFIG_BRIDGE_LOG_BLE_DATA_EVENT),
+APP_EVENT_TYPE_DEFINE(ble_data_event,
 		  log_ble_data_event,
-		  NULL);
+		  NULL,
+		  APP_EVENT_FLAGS_CREATE(
+			IF_ENABLED(CONFIG_BRIDGE_LOG_BLE_DATA_EVENT,
+				(APP_EVENT_TYPE_FLAGS_INIT_LOG_ENABLE))));

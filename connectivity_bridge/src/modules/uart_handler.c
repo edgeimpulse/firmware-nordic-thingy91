@@ -5,9 +5,9 @@
  */
 
 #include <zephyr/types.h>
-#include <sys/ring_buffer.h>
-#include <drivers/uart.h>
-#include <pm/device.h>
+#include <zephyr/sys/ring_buffer.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/pm/device.h>
 
 #define MODULE uart_handler
 #include "module_state_event.h"
@@ -16,41 +16,28 @@
 #include "cdc_data_event.h"
 #include "uart_data_event.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(MODULE, CONFIG_BRIDGE_UART_LOG_LEVEL);
+
+static const struct device *devices[] = {
+	DEVICE_DT_GET(DT_NODELABEL(uart0)),
+	DEVICE_DT_GET(DT_NODELABEL(uart1)),
+};
+
+#define UART_DEVICE_COUNT ARRAY_SIZE(devices)
 
 #define UART_BUF_SIZE CONFIG_BRIDGE_BUF_SIZE
 
 #define UART_SLAB_BLOCK_SIZE sizeof(struct uart_rx_buf)
 #define UART_SLAB_BLOCK_COUNT (UART_DEVICE_COUNT * CONFIG_BRIDGE_UART_BUF_COUNT)
 #define UART_SLAB_ALIGNMENT 4
-#define UART_RX_TIMEOUT_MS 1
+#define UART_RX_TIMEOUT_USEC 1000
 
 #if defined(CONFIG_PM_DEVICE)
 #define UART_SET_PM_STATE true
 #else
 #define UART_SET_PM_STATE false
 #endif
-
-#define UART_DEVICE_LIST \
-	X(0)\
-	X(1)
-
-enum uart_device_idx {
-#define X(_DEV_IDX) CONCAT(UART_DEVICE, _DEV_IDX),
-	UART_DEVICE_LIST
-#undef X
-	UART_DEVICE_COUNT
-};
-
-BUILD_ASSERT(UART_DEVICE_COUNT > 0);
-
-/* List of UART device names. "UART_0", "UART_1", etc. */
-static const char *device_names[UART_DEVICE_COUNT] = {
-#define X(_DEV_IDX) STRINGIFY(CONCAT(UART_, _DEV_IDX)),
-	UART_DEVICE_LIST
-#undef X
-};
 
 struct uart_rx_buf {
 	atomic_t ref_counter;
@@ -60,7 +47,7 @@ struct uart_rx_buf {
 
 struct uart_tx_buf {
 	struct ring_buf rb;
-	uint32_t buf[UART_BUF_SIZE];
+	uint8_t buf[UART_BUF_SIZE];
 };
 
 BUILD_ASSERT((sizeof(struct uart_rx_buf) % UART_SLAB_ALIGNMENT) == 0);
@@ -70,7 +57,6 @@ BUILD_ASSERT((sizeof(struct uart_rx_buf) % UART_SLAB_ALIGNMENT) == 0);
 
 K_MEM_SLAB_DEFINE(uart_rx_slab, UART_SLAB_BLOCK_SIZE, UART_SLAB_BLOCK_COUNT, UART_SLAB_ALIGNMENT);
 
-static const struct device *devices[UART_DEVICE_COUNT];
 static struct uart_tx_buf uart_tx_ringbufs[UART_DEVICE_COUNT];
 static uint32_t uart_default_baudrate[UART_DEVICE_COUNT];
 /* UART RX only enabled when there is one or more subscribers (power saving) */
@@ -153,7 +139,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt,
 		event->dev_idx = dev_idx;
 		event->buf = &evt->data.rx.buf[evt->data.rx.offset];
 		event->len = evt->data.rx.len;
-		EVENT_SUBMIT(event);
+		APP_EVENT_SUBMIT(event);
 		break;
 	case UART_RX_BUF_RELEASED:
 		if (evt->data.rx_buf.buf) {
@@ -273,7 +259,7 @@ static void enable_uart_rx(uint8_t dev_idx)
 		return;
 	}
 
-	err = uart_rx_enable(dev, buf->buf, sizeof(buf->buf), UART_RX_TIMEOUT_MS);
+	err = uart_rx_enable(dev, buf->buf, sizeof(buf->buf), UART_RX_TIMEOUT_USEC);
 	if (err) {
 		uart_rx_buf_unref(buf);
 		LOG_ERR("uart_rx_enable: %d", err);
@@ -353,13 +339,13 @@ static int uart_tx_enqueue(uint8_t *data, size_t data_len, uint8_t dev_idx)
 	return 0;
 }
 
-static bool event_handler(const struct event_header *eh)
+static bool app_event_handler(const struct app_event_header *aeh)
 {
 	int err;
 
-	if (is_uart_data_event(eh)) {
+	if (is_uart_data_event(aeh)) {
 		const struct uart_data_event *event =
-			cast_uart_data_event(eh);
+			cast_uart_data_event(aeh);
 
 		/* All subscribers have gotten a chance to copy data at this point */
 		uart_rx_buf_unref(event->buf);
@@ -367,9 +353,9 @@ static bool event_handler(const struct event_header *eh)
 		return true;
 	}
 
-	if (is_cdc_data_event(eh)) {
+	if (is_cdc_data_event(aeh)) {
 		const struct cdc_data_event *event =
-			cast_cdc_data_event(eh);
+			cast_cdc_data_event(aeh);
 
 		if (event->dev_idx >= UART_DEVICE_COUNT) {
 			return false;
@@ -391,9 +377,9 @@ static bool event_handler(const struct event_header *eh)
 		return false;
 	}
 
-	if (is_ble_data_event(eh)) {
+	if (is_ble_data_event(aeh)) {
 		const struct ble_data_event *event =
-			cast_ble_data_event(eh);
+			cast_ble_data_event(aeh);
 		/* Only one BLE Service instance: always map to UART_0 */
 		uint8_t dev_idx = 0;
 
@@ -411,9 +397,9 @@ static bool event_handler(const struct event_header *eh)
 		return false;
 	}
 
-	if (is_peer_conn_event(eh)) {
+	if (is_peer_conn_event(aeh)) {
 		const struct peer_conn_event *event =
-			cast_peer_conn_event(eh);
+			cast_peer_conn_event(aeh);
 		int prev_count;
 
 		if (event->dev_idx >= UART_DEVICE_COUNT) {
@@ -454,17 +440,17 @@ static bool event_handler(const struct event_header *eh)
 		return false;
 	}
 
-	if (is_module_state_event(eh)) {
+	if (is_module_state_event(aeh)) {
 		const struct module_state_event *event =
-			cast_module_state_event(eh);
+			cast_module_state_event(aeh);
 
 		if (check_state(event, MODULE_ID(main), MODULE_STATE_READY)) {
 			for (int i = 0; i < UART_DEVICE_COUNT; ++i) {
 				struct uart_config cfg;
 
-				devices[i] = device_get_binding(device_names[i]);
-				if (!devices[i]) {
-					LOG_ERR("%s not available", log_strdup(device_names[i]));
+				if (!device_is_ready(devices[i])) {
+					LOG_ERR("UART device not ready: %s",
+						devices[i]->name);
 					continue;
 				}
 
@@ -498,9 +484,9 @@ static bool event_handler(const struct event_header *eh)
 
 	return false;
 }
-EVENT_LISTENER(MODULE, event_handler);
-EVENT_SUBSCRIBE(MODULE, module_state_event);
-EVENT_SUBSCRIBE(MODULE, peer_conn_event);
-EVENT_SUBSCRIBE(MODULE, ble_data_event);
-EVENT_SUBSCRIBE(MODULE, cdc_data_event);
-EVENT_SUBSCRIBE_FINAL(MODULE, uart_data_event);
+APP_EVENT_LISTENER(MODULE, app_event_handler);
+APP_EVENT_SUBSCRIBE(MODULE, module_state_event);
+APP_EVENT_SUBSCRIBE(MODULE, peer_conn_event);
+APP_EVENT_SUBSCRIBE(MODULE, ble_data_event);
+APP_EVENT_SUBSCRIBE(MODULE, cdc_data_event);
+APP_EVENT_SUBSCRIBE_FINAL(MODULE, uart_data_event);

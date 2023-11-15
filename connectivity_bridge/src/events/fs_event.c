@@ -8,17 +8,13 @@
 #include <assert.h>
 
 #include <fs_event.h>
-#include <fs/fs.h>
+#include <zephyr/fs/fs.h>
 
-static int log_fs_event(
-	const struct event_header *eh,
-	char *buf,
-	size_t buf_len)
+static void log_fs_event(const struct app_event_header *aeh)
 {
-	const struct fs_event *event = cast_fs_event(eh);
+	const struct fs_event *event = cast_fs_event(aeh);
 
-	EVENT_MANAGER_LOG(eh, "req:%d", event->req);
-	return 0;
+	APP_EVENT_MANAGER_LOG(aeh, "req:%d", event->req);
 }
 
 int fs_event_helper_file_write(
@@ -61,7 +57,9 @@ int fs_event_helper_file_write(
 	return 0;
 }
 
-EVENT_TYPE_DEFINE(fs_event,
-		  IS_ENABLED(CONFIG_BRIDGE_LOG_FS_EVENT),
+APP_EVENT_TYPE_DEFINE(fs_event,
 		  log_fs_event,
-		  NULL);
+		  NULL,
+		  APP_EVENT_FLAGS_CREATE(
+			IF_ENABLED(CONFIG_BRIDGE_LOG_FS_EVENT,
+				(APP_EVENT_TYPE_FLAGS_INIT_LOG_ENABLE))));

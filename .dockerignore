@@ -1,4 +1,2 @@
-build/
-modules/
-*.hex
-edge-impulse-sdk/
+# Ignore everything
+*

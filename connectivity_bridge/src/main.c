@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 
-#include <event_manager.h>
+#include <app_event_manager.h>
 
 #define MODULE main
 #include "module_state_event.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(MODULE);
 
 #define USB_SERIALNUMBER_TEMPLATE "THINGY91_%04X%08X"
@@ -28,11 +28,12 @@ uint8_t *usb_update_sn_string_descriptor(void)
 	return usb_serial_str;
 }
 
-void main(void)
+int main(void)
 {
-	if (event_manager_init()) {
-		LOG_ERR("Event manager not initialized");
+	if (app_event_manager_init()) {
+		LOG_ERR("Application Event Manager not initialized");
 	} else {
 		module_set_state(MODULE_STATE_READY);
 	}
+	return 0;
 }

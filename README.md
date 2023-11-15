@@ -1,154 +1,115 @@
-# Edge Impulse firmware for Nordic Semi Thingy:91
+# Edge Impulse firmware for Nordic Semiconductor Thingy:91
 
 [Edge Impulse](https://www.edgeimpulse.com) enables developers to create the next generation of intelligent device solutions with embedded Machine Learning. This repository contains the Edge Impulse firmware for the Nordic Semiconductor Thingy91 development board. This combination supports all Edge Impulse device features, including ingestion, remote management and inferencing.
 
-> **Note:** Do you just want to use this development board with Edge Impulse? No need to build this firmware. See the instructions for the [Thingy91](https://docs.edgeimpulse.com/docs/nordic-semi-thingy91) for a prebuilt image and instructions, or use the [data forwarder](https://docs.edgeimpulse.com/docs/cli-data-forwarder) to capture data from any sensor.
+> **Note:** Do you just want to use this development board with Edge Impulse? No need to build this firmware. See the instructions for the [Thingy:91](https://docs.edgeimpulse.com/docs/development-platforms/officially-supported-mcu-targets/nordic-semi-thingy91) for a prebuilt image and instructions, or use the [data forwarder](https://docs.edgeimpulse.com/docs/tools/edge-impulse-cli/cli-data-forwarder) to capture data from any sensor.
 
-## How to build
+## Building the device firmware (native)
 
-**1. Setting up NCS**
+1. Install the [nRF Connect SDK](https://docs.nordicsemi.com/bundle/ncs-2.4.0/page/nrf/getting_started/installing.html) in a *separate* folder from this repository (e.g. `~/repos/ncs`).
 
-1. Install the [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/gs_installing.html) in a *separate* folder from this repository (e.g. `~/repos/ncs`).
-1. Check out NCS version 1.9.1:
+2. Clone this repository:
 
-    ```
-    $ cd ~/repos/ncs/nrf
-    $ git checkout v1.9.1
-    $ cd ..
-    $ west update
+    ```bash
+    $ git clone https://github.com/edgeimpulse/firmware-nordic-thingy91
     ```
 
-1. Set your `ZEPHYR_BASE` environment variable to `~/repos/ncs/zephyr`.
+3. (optional) Build the `connectivity bridge`:
+    > **Note:** If your Thingy:91 is not registering two serial ports after connecting to PC through Micro USB cable, then you have to flash the `connectivty bridge` firmware. Otherwise, go to the next step.
 
-**2. Building and flashing the `connectivity bridge`**
-
-If your Thingy91 is not registering two serial ports after connecting to PC through Micro USB cable, then you have to flash the `connectivty bridge` firmware. Otherwise, go to the next step.
-
-1. Building the `connectivity bridge`:
-
-    ```
+    ```bash
     $ cd connectivity_bridge/
     $ west build -b thingy91_nrf52840
     ```
 
-1. To flash the `connectivity bridge` using JLink, do as follows:
-    1. Ensure that the `SWD SELECT` switch is in `nRF52` postion.
+4. Go back to the `firmware-nordic-thingy91` directory (don't run this command from the `connectivity_bridge` folder).
+5. Build the application:
 
-        ![Thingy91 SWD SELECT switch location](./doc/thingy91-swd-select.png)
-
-    1. Connect your Thingy91 to JLink (eg. another Nordic's DK) as shown [here](https://infocenter.nordicsemi.com/topic/ug_thingy91_gsg/UG/thingy91_gsg/updating_fw_ext_probe.html?cp=14_0_3_1)
-    1. Flash:
-
-        ```
-        $ west flash
-        ```
-
-1. To flash the firmware using USB cable and serial bootloader
-
-    > **Note:** Make sure your `Thingy91` has original firmware and wasn't manualy flashed with any other firmware
-
-    Follow [this instruction](https://infocenter.nordicsemi.com/topic/ug_thingy91_gsg/UG/thingy91_gsg/updating_fw_usb.html?cp=14_0_3_0) (steps 1 to 3). In the step 3f-3g use the following file: `connectivity_bridge/build/zephyr/app_signed.hex`
-
-**3. Building and flashing the application**
-
-1. Go back to the `firmware-nordic-thingy91` directory (don't run this command from the `connectivity_bridge` folder).
-1. Build the application:
-
-    ```
+    ```bash
     $ west build -b thingy91_nrf9160_ns
     ```
-
-1. To flash the application using JLink, do as follows:
-    1. Switch the `SWD SELECT` back to the `nRF91` position.
-    1. Connect your Thingy91 to JLink (eg. another Nordic's DK like `nRF9160DK` or `nrf5340DK`) as shown [here](https://infocenter.nordicsemi.com/topic/ug_thingy91_gsg/UG/thingy91_gsg/updating_fw_ext_probe.html?cp=14_0_3_1)
-    1. Flash:
-
-        ```
-        $ west flash
-        ```
-
-1. To flash the firmware using USB cable and serial bootloader
-
-    > **Note:** Make sure your `Thingy91` has original firmware and wasn't manualy flashed with any other firmware
-
-    Follow [this instruction](https://infocenter.nordicsemi.com/topic/ug_thingy91_gsg/UG/thingy91_gsg/updating_fw_usb.html?cp=14_0_3_0) (steps 1, 2 and 5 only). In the step 5f-h use the following file: `build/zephyr/app_signed.hex`
-
-That's it. You can now connect to the device through the Edge Impulse CLI or through WebUSB, as described [here](https://docs.edgeimpulse.com/docs/nordic-semi-nrf5340-dk#4-setting-keys).
 
 ## Building the device firmware (Docker)
 
 1. Clone this repository:
 
-    ```
+    ```bash
     $ git clone https://github.com/edgeimpulse/firmware-nordic-thingy91
     ```
 
-1. Build the Docker container:
+2. Build the Docker container:
 
-    ```
-    $ docker build -t edge-impulse-nordic-thingy91 .
+    ```bash
+    $ docker build -t edge-impulse-nordic .
     ```
 
-1. Build the `connectivity_bridge`:
+3. (optional) Build the `connectivity_bridge`:
+    > **Note:** If your Thingy:91 is not registering two serial ports after connecting to PC through Micro USB cable, then you have to flash the `connectivty bridge` firmware. Otherwise, go to the next step.
 
-    ```
+    ```bash
     $ docker run --rm -v $PWD:/app -w /app/connectivity_bridge edge-impulse-nordic-thingy91 west build -b thingy91_nrf52840
     ```
 
-1. Build the application:
+4. Build the application:
 
     ```
     $ docker run --rm -v $PWD:/app edge-impulse-nordic-thingy91 west build -b thingy91_nrf9160_ns
     ```
 
-## Running your ML model
+## Flashing
 
-To update your ML model:
+1. (optional) To flash the `connectivity bridge` follow [this guide](https://docs.nordicsemi.com/bundle/ncs-latest/page/nrf/device_guides/working_with_nrf/nrf91/thingy91_gsg.html#updating_the_firmware_in_the_nrf52840_soc) and use the file: `connectivity_bridge/build/zephyr/app_signed.hex`.
+
+2. To flash the application follow [this guide](https://docs.nordicsemi.com/bundle/ncs-latest/page/nrf/device_guides/working_with_nrf/nrf91/thingy91_gsg.html#program_the_nrf9160_sip_application) and use the file `build/zephyr/app_signed.hex`.
+
+That's it. You can now connect to the device through the Edge Impulse CLI or through WebUSB, as described [here](https://docs.edgeimpulse.com/docs/development-platforms/officially-supported-mcu-targets/nordic-semi-nrf5340-dk#4.-setting-keys).
+
+## Updating your ML model
 
 1. [Train a model in Edge Impulse](https://docs.edgeimpulse.com).
-1. On the **Deployment** page in the Studio, export as a C++ library.
-1. Remove the `edge-impulse-sdk`, `model-parameters` and `tflite-model` directories in this repository.
-1. Add the folders from the C++ library (but **not** the CMakeLists.txt file) to this repository.
-1. Rebuild the application.
-1. Run your model via:
+2. On the **Deployment** page in the Studio, export as a C++ library.
+3. Remove the content of `ei-model` directory in this repository.
+4. Extract the downloaded zip with the C++ library into `ei-model` directory.
+5. Rebuild the application.
+
+## Using Remote Ingestion
+
+This firmware is equipped with the Remote Ingestion functionality. It allows you to connect your device to the internet using the LTE connection and start ingesting data remotely from the Edge Impulse Studio!
+
+To build the firmware with the Remote Ingestion, follow the steps above but insted of command:
+
+```
+west build -b thingy91_nrf9160_ns
+```
+
+Run:
+
+```
+west build -b thingy91_nrf9160_ns -- -DEXTRA_CONF_FILE=overlay-remote-ingestion.conf
+```
+
+And then:
+1. Flash the board and connect for the first time to studio.
+2. Power off the board and insert the SIM card.
+    > **Note:** Make sure your SIM card is active. You can use the iBasis SIM card shipped with the Thingy:91 or any other SIM card that supports LTE-M and/or NB-IoT.
+3. Power on the board and wait for the connection to be established (Thingy will blink RGB LED).
+4. Go to your project in Studio and click on **Devices** tab, you should see your device with green mark.
+
+## Troubleshooting
+
+1. In case of any issues, the Thingy:91 with Edge Impulse firmware is exposing a serial console on the first UART port (connection parameters 115200bps 8N1). Open the serial port and reset the device to see the boot messages.
+2. If you are using the Remote Ingestion functionality and have problems with connection, in the `overlay-remote-ingestion.conf` file change:
 
     ```
-    $ edge-impulse-run-impulse
+    CONFIG_REMOTE_INGESTION_LOG_LEVEL_WRN=y
     ```
 
-    (Add `--continuous` to run continuous audio classification)
-
-### MQTT demo
-
-To see the output of inference process, make to following steps after deploying ML model:
-1. If you use the iBasis SIM card provided in the Thingy91 kit, create an account on [nRF Cloud](https://www.nrfcloud.com) and add a new SIM card.
-1. Insert SIM Card to Thingy91 and power cycle the board.
-1. Open Serial Port Terminal of the Thingy91 (use first port eg. `ttyACM0` on Linux)
-1. Connect the board to MQTT server issuing the follwoing command:
+    to:
 
     ```
-    AT+CONNECT
+    CONFIG_REMOTE_INGESTION_LOG_LEVEL_DBG=y
     ```
 
-    The connection can take while and as a result you should get the `OK` response or `ERROR` if something went wrong.
+    After rebuilding the firmware and flashing, you should see more detailed logs in the serial console.
 
-1. After successfull connection run the model:
-
-    ```
-    AT+RUNIMPULSE
-    ```
-
-1. Open [HiveMQ Online MQTT Client](http://www.hivemq.com/demos/websocket-client/) and click `Connect`
-
-    ![HiveMQ Online MQTT Client](./doc/online-mqtt-client-connect.png)
-
-1. After connection, click `Add New Topic Subscription`, in the dialog enter topic `ei/demo` and click `Subscribe`
-
-    ![MQTT Client Subscribe](./doc/online-mqtt-client-subscribe.png)
-
-    ![MQTT Client topic subscription](./doc/online-mqtt-client-topic.png)
-
-1. After that you should start seeing messages incoming from `Thingy91`
-
-    ![MQTT Client topic subscription](./doc/online-mqtt-client-messages.png)
-
+3. Remember that device configuration is stored in the nRF9160 SoC Flash, so after every flashing your device is loosing API KEY and other settings. You have to connect the device to Edge Impulse through `edge-impulse-daemon` once again to restore the configuration.
