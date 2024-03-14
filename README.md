@@ -47,7 +47,7 @@
     > **Note:** If your Thingy:91 is not registering two serial ports after connecting to PC through Micro USB cable, then you have to flash the `connectivty bridge` firmware. Otherwise, go to the next step.
 
     ```bash
-    $ docker run --rm -v $PWD:/app -w /app/connectivity_bridge edge-impulse-nordic-thingy91 west build -b thingy91_nrf52840
+    $ docker run --rm -v $PWD:/app -w /app/connectivity_bridge edge-impulse-nordic west build -b thingy91_nrf52840
     ```
 
 4. Build the application:

@@ -56,7 +56,6 @@ public:
 
 #if MULTI_FREQ_ENABLED == 1
     bool start_multi_sample_thread(void (*sample_multi_read_cb)(uint8_t), float* multi_sample_interval_ms, uint8_t num_fusioned) override;
-    void (*sample_multi_read_callback)(uint8_t);
 #endif
 };
 

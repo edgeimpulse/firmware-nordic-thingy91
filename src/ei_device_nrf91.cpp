@@ -108,6 +108,7 @@ static void sampler_work_handler(struct k_work *work)
     else {
         uint8_t flag = 0;
         uint8_t i = 0;
+        
         dev->actual_timer += dev->get_sample_interval();
 
         for (i = 0; i < dev->get_fusioning(); i++){
@@ -219,8 +220,10 @@ bool EiDeviceNRF91::start_sample_thread(void (*sample_read_cb)(void), float samp
     this->sample_read_callback = sample_read_cb;
 
 #if MULTI_FREQ_ENABLED == 1
+    this->actual_timer = 0;
     this->fusioning = 1;
 #endif
+
     k_timer_start(&sampler_timer, K_MSEC(sample_interval_ms), K_MSEC(sample_interval_ms));
 
     return true;
@@ -259,6 +262,11 @@ bool EiDeviceNRF91::start_multi_sample_thread(void (*sample_multi_read_cb)(uint8
 bool EiDeviceNRF91::stop_sample_thread(void)
 {
     k_timer_stop(&sampler_timer);
+
+#if MULTI_FREQ_ENABLED == 1
+    this->actual_timer = 0;
+    this->fusioning = 0;
+#endif
 
     return true;
 }

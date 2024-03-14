@@ -41,6 +41,7 @@ static inference_state_t state = INFERENCE_STOPPED;
 static uint64_t last_inference_ts = 0;
 static bool continuous_mode = false;
 static bool debug_mode = false;
+static bool is_fusion = false;
 static float samples_circ_buff[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE];
 static int samples_wr_index = 0;
 
@@ -70,18 +71,6 @@ bool samples_callback(const void *raw_sample, uint32_t raw_sample_size)
     return false;
 }
 
-static void display_results(ei_impulse_result_t* result)
-{
-    ei_printf("Predictions (DSP: %d ms., Classification: %d ms., Anomaly: %d ms.): \n",
-        result->timing.dsp, result->timing.classification, result->timing.anomaly);
-    for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
-        ei_printf("    %s: \t%f\r\n", result->classification[ix].label, result->classification[ix].value);
-    }
-#if EI_CLASSIFIER_HAS_ANOMALY == 1
-    ei_printf("    anomaly score: %f\r\n", result->anomaly);
-#endif
-}
-
 void ei_run_impulse(void)
 {
     EiDeviceInfo *dev = EiDeviceInfo::get_device();
@@ -93,8 +82,18 @@ void ei_run_impulse(void)
             if(ei_read_timer_ms() < (last_inference_ts + 2000)) {
                 return;
             }
-            state = INFERENCE_SAMPLING;
+            
+#if MULTI_FREQ_ENABLED == 1
+            if (is_fusion) {
+                ei_multi_fusion_sample_start(&samples_callback, EI_CLASSIFIER_INTERVAL_MS);
+            }
+            else {
+                ei_fusion_sample_start(&samples_callback, EI_CLASSIFIER_INTERVAL_MS);
+            }
+#else
             ei_fusion_sample_start(&samples_callback, EI_CLASSIFIER_INTERVAL_MS);
+#endif
+            state = INFERENCE_SAMPLING;
             dev->set_state(eiStateSampling);
             ei_printf("Sampling...\n");
             return;
@@ -170,6 +169,9 @@ void ei_start_impulse(bool continuous, bool debug, bool use_max_uart_speed)
 
     continuous_mode = continuous;
     debug_mode = debug;
+#if MULTI_FREQ_ENABLED == 1
+    is_fusion = ei_is_fusion();
+#endif
 
     // summary of inferencing settings (from model_metadata.h)
     ei_printf("Inferencing settings:\n");

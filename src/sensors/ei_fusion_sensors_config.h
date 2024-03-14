@@ -23,9 +23,9 @@
 #ifndef EI_FUSION_SENSORS_CONFIG_H
 #define EI_FUSION_SENSORS_CONFIG_H
 
-#define NUM_FUSION_SENSORS       3  // number of fusable sensor modules
-#define FUSION_FREQUENCY         10.0f // sampling frequency for fusion samples
-#define NUM_MAX_FUSIONS          2
+#define NUM_MAX_FUSIONS          3
+
+#define MULTI_FREQ_ENABLED       1
 
 /** Format used for fusion */
 typedef float fusion_sample_format_t;
