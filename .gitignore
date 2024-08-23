@@ -6,3 +6,4 @@ tags.lock
 bootloader/
 tools/
 *.hex
+create-arduino-library.sh
