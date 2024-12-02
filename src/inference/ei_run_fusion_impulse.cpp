@@ -82,7 +82,7 @@ void ei_run_impulse(void)
             if(ei_read_timer_ms() < (last_inference_ts + 2000)) {
                 return;
             }
-            
+
 #if MULTI_FREQ_ENABLED == 1
             if (is_fusion) {
                 ei_multi_fusion_sample_start(&samples_callback, EI_CLASSIFIER_INTERVAL_MS);
@@ -139,12 +139,12 @@ void ei_run_impulse(void)
 
     if(continuous_mode == true) {
         if(++print_results >= (EI_CLASSIFIER_SLICES_PER_MODEL_WINDOW >> 1)) {
-            display_results(&result);
+            display_results(&ei_default_impulse, &result);
             print_results = 0;
         }
     }
     else {
-        display_results(&result);
+        display_results(&ei_default_impulse, &result);
     }
 
     if(continuous_mode == true) {
